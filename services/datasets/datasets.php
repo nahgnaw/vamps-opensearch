@@ -184,7 +184,7 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 				break;
 				
 			case "datasets":
-				$body .= "?dataset a [rdfs:label 'Dataset'@en] . ";
+				$body .= '?dataset a [rdfs:label "Dataset"@en] . ';
 				$body .= "?dataset rdfs:label ?l . ";
 				// $body .= "OPTIONAL { ?dataset dco:hasDcoId ?id . } ";
 				// $body .= "OPTIONAL { ?dataset dco:yearOfPublication ?y . } ";
