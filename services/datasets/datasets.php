@@ -1,8 +1,8 @@
 <?php
 
-include_once("../opensearch/utils.php");
+include_once("../utils.php");
 // parent class S2SConfig
-include_once("../opensearch/config.php");
+include_once("../config.php");
 
 class VAMPS_Dataset_S2SConfig extends S2SConfig {
 	
@@ -49,7 +49,7 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 			CURLOPT_TIMEOUT => 120
 		);
 				
-		$encoded_query = 'query=' . urlencode($query) . '&format=xml';
+		$encoded_query = 'query=' . urlencode($query) . urlencode('&format=application/sparql-results+xml');
 		return execSelect($this->getEndpoint(), $encoded_query, $options);
 	}
 

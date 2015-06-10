@@ -2,6 +2,9 @@
 
 include_once("datasets.php");
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL | E_STRICT);
+
 // type of requested results as defined in the opensearch document. The
 // type will be the name of one of the facets, or the name of the result
 // set
