@@ -4,12 +4,10 @@ include_once("../opensearch/utils.php");
 // parent class S2SConfig
 include_once("../opensearch/config.php");
 
-class DCO_Datasets_S2SConfig extends S2SConfig {
+class VAMPS_Dataset_S2SConfig extends S2SConfig {
 	
 	private $namespaces = array(
-		'dco'	=> "http://info.deepcarbon.net/schema#",
-		'vivo'	=> "http://vivoweb.org/ontology/core#",
-		'vitro'	=> "http://vitro.mannlib.cornell.edu/ns/vitro/0.7#",
+		'vamps'	=> "http://vamps.mbl.edu/schema#",
 		'bibo'	=> "http://purl.org/ontology/bibo/",
 		'foaf'	=> "http://xmlns.com/foaf/0.1/",
 		'rdfs'	=> "http://www.w3.org/2000/01/rdf-schema#",
@@ -19,8 +17,7 @@ class DCO_Datasets_S2SConfig extends S2SConfig {
 		'owl'	=> "http://www.w3.org/2002/07/owl#",
 		'dct'	=> "http://purl.org/dc/terms/",
 		'dc'	=> "http://purl.org/dc/elements/1.1/",
-		'obo'	=> "http://purl.obolibrary.org/obo/",
-		'dcat'	=> "http://www.w3.org/ns/dcat#"
+		'obo'	=> "http://purl.obolibrary.org/obo/"
 	);
 
 	/**
@@ -28,7 +25,7 @@ class DCO_Datasets_S2SConfig extends S2SConfig {
 	* @return string SPARQL endpoint URL
 	*/
 	public function getEndpoint() {
-		return "http://deepcarbon.tw.rpi.edu:3030/VIVO/query";
+		return "https://vamps.tw.rpi.edu/virtuoso/sparql";
 	}
 
 	/**
@@ -52,68 +49,8 @@ class DCO_Datasets_S2SConfig extends S2SConfig {
 			CURLOPT_TIMEOUT => 120
 		);
 				
-		$encoded_query = 'query=' . urlencode($query) . '&output=xml';
+		$encoded_query = 'query=' . urlencode($query) . '&format=xml';
 		return execSelect($this->getEndpoint(), $encoded_query, $options);
-	}
-
-	/**
-	* Get DCO authors for a given dataset
-	* @param string $dataset dataset uri
-	* @return array an array of associative arrays containing the DCO author bindings
-	*/
-	private function getDCOAuthorsByDataset($dataset) {
-		$query = $this->getPrefixes();
-		$query .= "SELECT DISTINCT ?uri ?name WHERE { ";
-		$query .= "<$dataset> vivo:relatedBy [vivo:relates ?uri ] . ";
-		$query .= "?uri a foaf:Person . ";
-		$query .= "?uri rdfs:label ?label . ";
-		$query .= "BIND(str(?label) AS ?name) } ";
-		return $this->sparqlSelect($query);
-	}
-
-	/**
-	* Get other authors for a given dataset
-	* @param string $dataset dataset uri
-	* @return array an array of associative arrays containing the other author bindings
-	*/
-	private function getOtherAuthorsByDataset($dataset) {
-		$query = $this->getPrefixes();
-		$query .= "SELECT DISTINCT ?name WHERE { ";
-		$query .= "<$dataset> dco:authorName ?n . ";
-		$query .= "BIND(str(?n) AS ?name) } ";
-		return $this->sparqlSelect($query);
-	}
-
-	/**
-	* Get distributions for a given dataset
-	* @param string $dataset dataset uri
-	* @return array an array of associative arrays containing the distribution bindings 
-	*/
-	private function getDistributionsByDataset($dataset) {
-		$query = $this->getPrefixes();
-		$query .= "SELECT DISTINCT ?uri ?label ?access_url WHERE { ";
-		$query .= "<$dataset> dco:hasDistribution ?uri . ";
-		$query .= "?uri a dcat:Distribution . ";
-		$query .= "?uri rdfs:label ?l . ";
-		$query .= "?uri dco:accessURL ?access_url . ";
-		$query .= "BIND(str(?l) AS ?label) } ";
-		return $this->sparqlSelect($query);
-	}
-
-	/**
-	* Get files for a given dataset
-	* @param string $distribution distribution uri
-	* @return array an array of associative arrays containing the file bindings 
-	*/
-	private function getFilesByDistribution($distribution) {
-		$query = $this->getPrefixes();
-		$query .= "SELECT DISTINCT ?uri ?label ?download_url WHERE { ";
-		$query .= "<$distribution> dco:hasFile ?uri . ";
-		$query .= "?uri a dco:File . ";
-		$query .= "?uri rdfs:label ?l . ";
-		$query .= "?uri dco:downloadURL ?download_url . ";
-		$query .= "BIND(str(?l) AS ?label) } ";
-		return $this->sparqlSelect($query);
 	}
 
 	/**
@@ -137,98 +74,6 @@ class DCO_Datasets_S2SConfig extends S2SConfig {
 	public function getSearchResultOutput(array $result) {
 
 		$html = "<div class='result-list-item'>";
-
-		// label
-		$dataset_summary_url = "http://deepcarbon.net/dco_dataset_summary?uri=" . $result['dataset'];
-		$html .= "<span class='title'><a target='_blank' href=\"" . $dataset_summary_url . "\">" . $result['label'] . "</a></span>";
-			
-		// DCO-ID
-		if (isset($result['dco_id'])) {
-			$dco_id_label = substr(@$result['dco_id'], 25);
-			$html .= "<br /><span>DCO ID: <a target='_blank' href=\"" . $result['dco_id'] . "\">" . $dco_id_label . "</a></span>";
-		}
-
-		// communities
-		if (isset($result['community'])) {
-			$html .= "<br /><span>Communities: ";
-			$comm_arr = explode(",", $result['community']);
-			$comm_label_arr = explode(",", $result['community_label']);
-			$communities_markup = array();
-			foreach ($comm_arr as $i => $comm) {
-				array_push($communities_markup, "<a target='_blank' href=\"" . $comm . "\">" . $comm_label_arr[$i] . "</a>");
-			}
-			$html .= implode('; ', $communities_markup);
-			$html .= "</span>";
-		}
-
-		// groups
-		if (isset($result['group'])) {
-			$html .= "<br /><span>Groups: ";
-			$group_arr = explode(",", $result['group']);
-			$group_label_arr = explode(",", $result['group_label']);
-			$groups_markup = array();
-			foreach ($group_arr as $i => $group) {
-				array_push($groups_markup, "<a target='_blank' href=\"" . $group . "\">" . $group_label_arr[$i] . "</a>");
-			}
-			$html .= implode('; ', $groups_markup);
-			$html .= "</span>";
-		}
-
-		// authors
-		$dco_authors = $this->getDCOAuthorsByDataset($result['dataset']);
-		$other_authors = $this->getOtherAuthorsByDataset($result['dataset']);
-		if (count($dco_authors) > 0 || count($other_authors) > 0) {
-			$html .= "<br /><span>Authors: ";
-			if (count($dco_authors) > 0) {
-				$authors_markup = array();
-				foreach ($dco_authors as $i => $author) {	
-					array_push($authors_markup, "<a target='_blank' href=\"" . $author['uri'] . "\">" . $author['name'] . "</a>");
-				}
-				$html .= implode('; ', $authors_markup);
-			}
-			if (count($other_authors) > 0) {
-				$authors_markup = array();
-				foreach ($other_authors as $i => $author) {
-					array_push($authors_markup, $author['name']);
-				}
-				if (substr($html, -1) == ">") $html .= "; ";
-				$html .= implode('; ', $authors_markup);
-			}
-			$html .= "</span>";
-		}
-
-		// project
-		if (isset($result['project'])) {
-        	$html .= "<br /><span>Project: <a target='_blank' href=\"" . $result['project'] . "\">" . $result['project_label'] . "</a></span>";
-		}
-
-		// distributions & files
-		$distributions = $this->getDistributionsByDataset($result['dataset']);
-		if (count($distributions) > 0) {
-			$html .= "<br ><span>Distributions:<br >";
-			$distributions_markup = array();
-			foreach ($distributions as $i => $distribution) {
-				$files = $this->getFilesByDistribution($distribution['uri']);
-				$files_markup = '';
-				if (count($files) > 0) {
-					$files_markup = " (Direct access: ";
-					$files_markup_arr = array();
-					foreach ($files as $j => $file) {
-						array_push($files_markup_arr, "<a target='_blank' href=\"" . $file['download_url'] . "\">" . $file['label'] . "</a>");
-					}
-					$files_markup .= implode(', ', $files_markup_arr) . ")";
-				}
-				array_push($distributions_markup, "<a class='distribution' target='_blank' href=\"" . $distribution['access_url'] . "\">" . $distribution['label'] . "</a>". $files_markup);
-			}
-			$html .= implode('<br >', $distributions_markup);
-			$html .= "</span>";
-		}
-
-		// access
-		if (isset($result['access'])) {
-			$html .= "<br /><span>Access restriction: " . $result['access'] . "</span>";
-		}
-
 		$html .= "</div>";
 		return $html;
 	}
@@ -243,11 +88,8 @@ class DCO_Datasets_S2SConfig extends S2SConfig {
 		$header = "";
 		switch($type) {
 			case "datasets":
-				$header .= "?dataset ?dco_id ?label ?year ?project ?project_label ?access ";
-				$header .= '(GROUP_CONCAT(DISTINCT ?comm ; SEPARATOR=",") AS ?community) ';
-				$header .= '(GROUP_CONCAT(DISTINCT ?comm_label ; SEPARATOR=",") AS ?community_label) ';
-				$header .= '(GROUP_CONCAT(DISTINCT ?gp ; SEPARATOR=",") AS ?group) ';
-                $header .= '(GROUP_CONCAT(DISTINCT ?gp_label ; SEPARATOR=",") AS ?group_label) ';
+				$header .= "?dataset ?label";
+				// $header .= '(GROUP_CONCAT(DISTINCT ?comm ; SEPARATOR=",") AS ?community) ';
 				break;
 			case "count":
 				$header .= "(count(DISTINCT ?dataset) AS ?count)";
@@ -272,7 +114,7 @@ class DCO_Datasets_S2SConfig extends S2SConfig {
 		$footer = "";
 		switch($type) {
 			case "datasets":
-				$footer .= " GROUP BY ?dataset ?dco_id ?label ?year ?project ?project_label ?access";
+				$footer .= " GROUP BY ?dataset";
 				$footer .= " ORDER BY ?label";
 				if ($limit)	$footer .= " LIMIT $limit OFFSET $offset";
 				break;
@@ -342,21 +184,21 @@ class DCO_Datasets_S2SConfig extends S2SConfig {
 				break;
 				
 			case "datasets":
-				$body .= "?dataset a vivo:Dataset . ";
+				$body .= "?dataset a [rdfs:label 'Dataset'@en] . ";
 				$body .= "?dataset rdfs:label ?l . ";
-				$body .= "OPTIONAL { ?dataset dco:hasDcoId ?id . } ";
-				$body .= "OPTIONAL { ?dataset dco:yearOfPublication ?y . } ";
-				$body .= "OPTIONAL { ?dataset dco:associatedDCOCommunity ?comm . ?comm rdfs:label ?c_l . } ";
-				$body .= "OPTIONAL { ?dataset dco:associatedDCOPortalGroup ?gp . ?gp rdfs:label ?g_l . } ";
-				$body .= "OPTIONAL { ?project dco:relatedDataset ?dataset ; rdfs:label ?pl . } ";
-				$body .= "OPTIONAL { ?dataset obo:ERO_0000045 ?acc . } ";
+				// $body .= "OPTIONAL { ?dataset dco:hasDcoId ?id . } ";
+				// $body .= "OPTIONAL { ?dataset dco:yearOfPublication ?y . } ";
+				// $body .= "OPTIONAL { ?dataset dco:associatedDCOCommunity ?comm . ?comm rdfs:label ?c_l . } ";
+				// $body .= "OPTIONAL { ?dataset dco:associatedDCOPortalGroup ?gp . ?gp rdfs:label ?g_l . } ";
+				// $body .= "OPTIONAL { ?project dco:relatedDataset ?dataset ; rdfs:label ?pl . } ";
+				// $body .= "OPTIONAL { ?dataset obo:ERO_0000045 ?acc . } ";
 				$body .= "BIND(str(?l) AS ?label) . ";
-				$body .= "BIND(str(?id) AS ?dco_id) . ";
-				$body .= "BIND(str(?y) AS ?year) . ";
-				$body .= "BIND(str(?c_l) AS ?comm_label) . ";
-				$body .= "BIND(str(?g_l) AS ?gp_label) . ";
-				$body .= "BIND(str(?acc) AS ?access) . ";
-				$body .= "BIND(str(?pl) AS ?project_label) . ";
+				// $body .= "BIND(str(?id) AS ?dco_id) . ";
+				// $body .= "BIND(str(?y) AS ?year) . ";
+				// $body .= "BIND(str(?c_l) AS ?comm_label) . ";
+				// $body .= "BIND(str(?g_l) AS ?gp_label) . ";
+				// $body .= "BIND(str(?acc) AS ?access) . ";
+				// $body .= "BIND(str(?pl) AS ?project_label) . ";
 				break;
 		}
 				

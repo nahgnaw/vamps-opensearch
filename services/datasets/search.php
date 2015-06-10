@@ -12,59 +12,107 @@ $limit = 10;
 // buttons
 $offset = 0;
 // what to use to sort items in the result set, currently not enabled
-//$sort = null;
+$sort = null;
 
 // array for input constraints
 $constraints = array();
 
-// Get the community constraints from the request url
-if (@$_GET['communities'] && @$_GET['communities'] != '') {
-    $constraints['communities'] = explode(";",$_GET['communities']);
+if (@$_GET['habitat'] && @$_GET['habitat'] != '') {
+    $constraints['habitat'] = explode(";",$_GET['habitat']);
 }
 
-// Get the group constraints from the request url
-if (@$_GET['groups'] && @$_GET['groups'] != '') {
-    $constraints['groups'] = explode(";",$_GET['groups']);
+if (@$_GET['dissolved_oxygen'] && @$_GET['dissolved_oxygen'] != '') {
+    $constraints['dissolved_oxygen'] = explode(";",$_GET['dissolved_oxygen']);
 }
 
-// Get the DCO author constraints from the request url
-if (@$_GET['authors'] && @$_GET['authors'] != '') {
-    $constraints['authors'] = explode(";",$_GET['authors']);
+if (@$_GET['absolute_depth_beta'] && @$_GET['absolute_depth_beta'] != '') {
+    $constraints['absolute_depth_beta'] = explode(";",$_GET['absolute_depth_beta']);
 }
 
-// Get the other author constraints from the request url
-if (@$_GET['other_authors'] && @$_GET['other_authors'] != '') {
-    $constraints['other_authors'] = explode(";",$_GET['other_authors']);
+if (@$_GET['specific_conductance'] && @$_GET['specific_conductance'] != '') {
+    $constraints['specific_conductance'] = explode(";",$_GET['specific_conductance']);
 }
 
-// Get the project constraints from the request url
-if (@$_GET['projects'] && @$_GET['projects'] != '') {
-    $constraints['projects'] = explode(";",$_GET['projects']);
+if (@$_GET['depth_start'] && @$_GET['depth_start'] != '') {
+    $constraints['depth_start'] = explode(";",$_GET['depth_start']);
 }
 
-// Get the year constraints from the request url
-if (@$_GET['years'] && @$_GET['years'] != '') {
-    $constraints['years'] = explode(";",$_GET['years']);
+if (@$_GET['depth_end'] && @$_GET['depth_end'] != '') {
+    $constraints['depth_end'] = explode(";",$_GET['depth_end']);
 }
 
-// Get the number of results displayed on each page from the request url
+if (@$_GET['fecal_coliform'] && @$_GET['fecal_coliform'] != '') {
+    $constraints['fecal_coliform'] = explode(";",$_GET['fecal_coliform']);
+}
+
+if (@$_GET['collection_time'] && @$_GET['collection_time'] != '') {
+    $constraints['collection_time'] = explode(";",$_GET['collection_time']);
+}
+
+if (@$_GET['temperature'] && @$_GET['temperature'] != '') {
+    $constraints['temperature'] = explode(";",$_GET['temperature']);
+}
+
+if (@$_GET['conductivity'] && @$_GET['conductivity'] != '') {
+    $constraints['conductivity'] = explode(";",$_GET['conductivity']);
+}
+
+if (@$_GET['sample_type'] && @$_GET['sample_type'] != '') {
+    $constraints['sample_type'] = explode(";",$_GET['sample_type']);
+}
+
+if (@$_GET['dissolved_oxygen_2'] && @$_GET['dissolved_oxygen_2'] != '') {
+    $constraints['dissolved_oxygen_2'] = explode(";",$_GET['dissolved_oxygen_2']);
+}
+
+if (@$_GET['volume_filtered'] && @$_GET['volume_filtered'] != '') {
+    $constraints['volume_filtered'] = explode(";",$_GET['volume_filtered']);
+}
+
+if (@$_GET['environmental_zone'] && @$_GET['environmental_zone'] != '') {
+    $constraints['environmental_zone'] = explode(";",$_GET['environmental_zone']);
+}
+
+if (@$_GET['precipitation'] && @$_GET['precipitation'] != '') {
+    $constraints['precipitation'] = explode(";",$_GET['precipitation']);
+}
+
+if (@$_GET['longhurst_long_name'] && @$_GET['longhurst_long_name'] != '') {
+    $constraints['longhurst_long_name'] = explode(";",$_GET['longhurst_long_name']);
+}
+
+if (@$_GET['redox_state'] && @$_GET['redox_state'] != '') {
+    $constraints['redox_state'] = explode(";",$_GET['redox_state']);
+}
+
+if (@$_GET['latitude_longitude'] && @$_GET['latitude_longitude'] != '') {
+    $constraints['latitude_longitude'] = explode(";",$_GET['latitude_longitude']);
+}
+
+if (@$_GET['salinity'] && @$_GET['salinity'] != '') {
+    $constraints['salinity'] = explode(";",$_GET['salinity']);
+}
+
+if (@$_GET['longhurst_zone'] && @$_GET['longhurst_zone'] != '') {
+    $constraints['longhurst_zone'] = explode(";",$_GET['longhurst_zone']);
+}
+
+if (@$_GET['in_project'] && @$_GET['in_project'] != '') {
+    $constraints['in_project'] = explode(";",$_GET['in_project']);
+}
+
+if (@$_GET['IHO_area'] && @$_GET['IHO_area'] != '') {
+    $constraints['IHO_area'] = explode(";",$_GET['IHO_area']);
+}
+
 if (@$_GET['limit'] && @$_GET['limit'] != '') {
     $limit = $_GET['limit'];
 }
 
-// Get the offset for the current result set from the request url
 if (@$_GET['offset'] && @$_GET['offset'] != '') {
     $offset = $_GET['offset'];
 }
 
-// Sorting is currently not enabled 
-/*
-if (@$_GET['sort'] && @$_GET['sort'] != '') {
-    $sort = $_GET['sort'];
-}
-*/
-
-// Get the result type from the request url
 if (@$_GET['request'] && @$_GET['request'] != '') {
     $type = $_GET['request'];
 }
@@ -72,7 +120,7 @@ if (@$_GET['request'] && @$_GET['request'] != '') {
 
 // instantiate the Config class for the dataset browser (class
 // definition in "datasets.php")
-$s2s = new DCO_Datasets_S2SConfig();
+$s2s = new VAMPS_Dataset_S2SConfig();
 
 // get the response for the request given the type of request, the
 // constraints list to constrain the result, the number of results to
