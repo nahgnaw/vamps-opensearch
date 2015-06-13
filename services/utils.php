@@ -65,9 +65,7 @@ function curl_post($url, $post = NULL, array $options = array())
  * @return array an array of associative arrays containing the bindings
  */
 function execSelect($endpoint, $payload, $options) {
-
 	$content = curl_post($endpoint, $payload, $options);
-
 	$xml = simplexml_load_string($content);
 	$results = array();
 	foreach ($xml->results->result as $result) {

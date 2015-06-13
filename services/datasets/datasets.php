@@ -8,16 +8,14 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 	
 	private $namespaces = array(
 		'vamps'	=> "http://vamps.mbl.edu/schema#",
-		'bibo'	=> "http://purl.org/ontology/bibo/",
-		'foaf'	=> "http://xmlns.com/foaf/0.1/",
+		'dco'	=> "http://deepcarbon.net/schema#",
+		'vivo'	=> "http://vivoweb.org/",
 		'rdfs'	=> "http://www.w3.org/2000/01/rdf-schema#",
-		'time'	=> "http://www.w3.org/2006/time#",
 		'xsd'	=> "http://www.w3.org/2001/XMLSchema#",
 		'skos'	=> "http://www.w3.org/2004/02/skos/core#",
 		'owl'	=> "http://www.w3.org/2002/07/owl#",
 		'dct'	=> "http://purl.org/dc/terms/",
-		'dc'	=> "http://purl.org/dc/elements/1.1/",
-		'obo'	=> "http://purl.obolibrary.org/obo/"
+		'dc'	=> "http://purl.org/dc/elements/1.1/"
 	);
 
 	/**
@@ -25,7 +23,7 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 	* @return string SPARQL endpoint URL
 	*/
 	public function getEndpoint() {
-		return "https://vamps.tw.rpi.edu/virtuoso/sparql";
+		return "http://vamps.tw.rpi.edu/virtuoso/sparql";
 	}
 
 	/**
@@ -42,14 +40,14 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 	* @return array an array of associative arrays containing the bindings of the query results
 	*/
 	public function sparqlSelect($query) {
-	
+		//echo $query;	
 		$options = array(
 			CURLOPT_FOLLOWLOCATION => true,
 			CURLOPT_CONNECTTIMEOUT => 5,
 			CURLOPT_TIMEOUT => 120
 		);
 				
-		$encoded_query = 'query=' . urlencode($query) . urlencode('&format=application/sparql-results+xml');
+		$encoded_query = 'query=' . urlencode($query) . '&' . urlencode('format=application/sparql-results+xml');
 		return execSelect($this->getEndpoint(), $encoded_query, $options);
 	}
 
@@ -271,7 +269,8 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		// Output for request type "datasets"	
 		if($type == "datasets") {
 			$count = $this->getSearchResultCount($constraints);						
-			return $this->getSearchResultsOutput($results, $limit, $offset, $count);
+			return $this->getFacetOutput($results);
+			//return $this->getSearchResultsOutput($results, $limit, $offset, $count);
 		}
 		// Output for other types of requests (i.e. search facets)
 		else {		
