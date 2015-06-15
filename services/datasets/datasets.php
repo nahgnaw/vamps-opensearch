@@ -18,6 +18,20 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		'dc'	=> "http://purl.org/dc/elements/1.1/"
 	);
 
+	private $datatype_property_labels = array(
+		"habitat", "specific conductance", "absolute depth beta", "dissolved oxygen", "collection time", "conductivity", "dissolved oxygen 2", "environmental zone",
+		"fecal coliform", "funding", "id", "latitude langitude", "longhurst long name", "notes", "precipitation", "public", "redox state", "revised project name",
+		"salinity", "sample ID", "sample type", "temperature", "volume filtered"
+	);
+
+	private $object_property_labels = array(
+		"has dataset", "IHO area", "in project", "longhurst zone", "owner"
+	);
+	
+	public function concatenate_label($label) {
+		return implode('_', explode(' ', $label));
+	}
+
 	/**
 	* Return SPARQL endpoint URL
 	* @return string SPARQL endpoint URL
@@ -40,7 +54,7 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 	* @return array an array of associative arrays containing the bindings of the query results
 	*/
 	public function sparqlSelect($query) {
-		//echo $query;	
+		//echo htmlentities($query);	
 		$options = array(
 			CURLOPT_FOLLOWLOCATION => true,
 			CURLOPT_CONNECTTIMEOUT => 5,
@@ -49,6 +63,22 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 				
 		$encoded_query = 'query=' . urlencode($query) . '&' . urlencode('format=application/sparql-results+xml');
 		return execSelect($this->getEndpoint(), $encoded_query, $options);
+	}
+
+	public function getDatasetDatatypePropertyValue($dataset, $datatypeProperty) {
+		$query = $this->getPrefixes();
+		$query .= "SELECT DISTINCT ?value WHERE { ";
+		$query .= "?p rdfs:label \"$datatypeProperty\"@en . ";
+		$query .= "OPTIONAL { <$dataset> ?p ?v . BIND(str(?v) AS ?value) }} ";
+		return $this->sparqlSelect($query);		
+	}
+
+	public function getDatasetObjectPropertyValue($dataset, $objectProperty) {
+		$query = $this->getPrefixes();
+		$query .= "SELECT DISTINCT ?value WHERE { ";
+		$query .= "?p rdfs:label \"$objectProperty\"@en . ";
+		$query .= "OPTIONAL { <$dataset> ?p [rdfs:label ?v] . BIND(str(?v) AS ?value) }} ";
+		return $this->sparqlSelect($query);		
 	}
 
 	/**
@@ -63,18 +93,6 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		$result = $results[0];
 		return $result['count'];
 	}
-
-	/**
-	* Create HTML of search result
-	* @param array $result query result to be processed into HTML
-	* @return string HTML div of search result entry
-	*/
-	public function getSearchResultOutput(array $result) {
-
-		$html = "<div class='result-list-item'>";
-		$html .= "</div>";
-		return $html;
-	}
 	
 	/**
 	* Return SPARQL query header component
@@ -86,7 +104,7 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		$header = "";
 		switch($type) {
 			case "datasets":
-				$header .= "?dataset ?label";
+				$header .= "?dataset ?label "; 
 				// $header .= '(GROUP_CONCAT(DISTINCT ?comm ; SEPARATOR=",") AS ?community) ';
 				break;
 			case "count":
@@ -134,43 +152,6 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		
 		$body = "";
 		switch($type) {
-			case "communities":
-				$body .= "?dataset a vivo:Dataset . ";
-				$body .= "?dataset  dco:associatedDCOCommunity ?id . ";
-				$body .= "?id rdfs:label ?l . ";
-				$body .= "BIND(str(?l) AS ?label) . ";
-				break;
-				
-			case "groups":
-				$body .= "?dataset a vivo:Dataset . ";
-				$body .= "?dataset dco:associatedDCOPortalGroup ?id . ";
-				$body .= "?id rdfs:label ?l . ";
-				$body .= "BIND(str(?l) AS ?label) . ";
-				break;
-
-			case "authors":
-				$body .= "?dataset a vivo:Dataset . ";
-				$body .= "?dataset vivo:relatedBy [vivo:relates ?id] . ";
-				$body .= "?id a foaf:Person . ";
-				$body .= "?id rdfs:label ?l . ";
-				$body .= "BIND(str(?l) AS ?label) . ";
-				break;
-
-			case "other_authors":
-				$body .= "?dataset a vivo:Dataset . ";
-				$body .= "?dataset dco:authorName ?id . ";
-				$body .= "BIND(str(?id) AS ?label) . ";
-				break;
-
-			case "projects":
-				$body .= "?dataset a vivo:Dataset . ";
-				$body .= "?project a vivo:Project . ";
-				$body .= "?project rdfs:label ?l . ";
-				$body .= "?project dco:relatedDataset ?dataset . ";
-				$body .= "BIND(str(?project) AS ?id) . ";
-				$body .= "BIND(str(?l) AS ?label) . ";
-				break;
-
 			case "years":
 				$body .= "?dataset a vivo:Dataset . ";
 				$body .= "?dataset dco:yearOfPublication ?id . ";
@@ -183,20 +164,8 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 				
 			case "datasets":
 				$body .= '?dataset a [rdfs:label "Dataset"@en] . ';
-				$body .= "?dataset rdfs:label ?l . ";
-				// $body .= "OPTIONAL { ?dataset dco:hasDcoId ?id . } ";
-				// $body .= "OPTIONAL { ?dataset dco:yearOfPublication ?y . } ";
-				// $body .= "OPTIONAL { ?dataset dco:associatedDCOCommunity ?comm . ?comm rdfs:label ?c_l . } ";
-				// $body .= "OPTIONAL { ?dataset dco:associatedDCOPortalGroup ?gp . ?gp rdfs:label ?g_l . } ";
-				// $body .= "OPTIONAL { ?project dco:relatedDataset ?dataset ; rdfs:label ?pl . } ";
-				// $body .= "OPTIONAL { ?dataset obo:ERO_0000045 ?acc . } ";
-				$body .= "BIND(str(?l) AS ?label) . ";
-				// $body .= "BIND(str(?id) AS ?dco_id) . ";
-				// $body .= "BIND(str(?y) AS ?year) . ";
-				// $body .= "BIND(str(?c_l) AS ?comm_label) . ";
-				// $body .= "BIND(str(?g_l) AS ?gp_label) . ";
-				// $body .= "BIND(str(?acc) AS ?access) . ";
-				// $body .= "BIND(str(?pl) AS ?project_label) . ";
+				$body .= '?dataset rdfs:label ?l . ';
+				$body .= 'BIND(str(?l) AS ?label) . ';
 				break;
 		}
 				
@@ -237,22 +206,25 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		return $body;
 	}
 	
-    /**
-     * For each selection in a facet add a link to the context for that selection
-     *
-     * using the individual link for the different types as the context
-     * for the selection
-     *
-     * @param array $results selections to add context to
-	 * @param string $type search type (e.g. 'datasets', 'authors', 'keywords')
-     */
-	private function addContextLinks(&$results, $type) {
-		
-		if ($type == "communities" || $type == "groups" || $type == "authors" || $type == "projects") {
-			foreach ( $results as $i => $result ) {
-				$results[$i]['context'] = $result['id']; 
-			}
-		}
+	public function getSearchResultOutput(array $result) {
+		$html = "<div class='result-list-item'></div>";
+		return $html;
+	}
+
+	public function addFieldsToResults(&$results, $fields, $fieldType) {
+		foreach($results as $ind => $result) {
+                	foreach($fields as $field) {
+				if($fieldType == "datatype")
+                        		$values = $this->getDatasetDatatypePropertyValue($result['dataset'], $field);
+				else if($fieldType == "object")
+                        		$values = $this->getDatasetObjectPropertyValue($result['dataset'], $field);
+                                if(count($values) > 0) {
+					foreach($values as $value) {
+						if(isset($value['value']))  $results[$ind][$this->concatenate_label($field)] = $value['value'];
+					}
+				}
+                       	}
+                }
 	}
 	
 	/**
@@ -268,9 +240,10 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		
 		// Output for request type "datasets"	
 		if($type == "datasets") {
-			$count = $this->getSearchResultCount($constraints);						
+			$count = $this->getSearchResultCount($constraints);
+			$this->addFieldsToResults($results, $this->datatype_property_labels, "datatype");	
+			$this->addFieldsToResults($results, $this->object_property_labels, "object");	
 			return $this->getFacetOutput($results);
-			//return $this->getSearchResultsOutput($results, $limit, $offset, $count);
 		}
 		// Output for other types of requests (i.e. search facets)
 		else {		

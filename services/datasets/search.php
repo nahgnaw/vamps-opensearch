@@ -10,7 +10,7 @@ error_reporting(E_ALL | E_STRICT);
 // set
 $type = null;
 // number of results to be displayed in the result set
-$limit = 10;
+$limit = null;
 // offset of the current result set, used by the next and previous
 // buttons
 $offset = 0;
