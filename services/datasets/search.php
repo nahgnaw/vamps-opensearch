@@ -20,8 +20,16 @@ $sort = null;
 // array for input constraints
 $constraints = array();
 
+if (@$_GET['id'] && @$_GET['id'] != '') {
+    $constraints['id'] = explode(";",$_GET['id']);
+}
+
 if (@$_GET['habitat'] && @$_GET['habitat'] != '') {
     $constraints['habitat'] = explode(";",$_GET['habitat']);
+}
+
+if (@$_GET['notes'] && @$_GET['notes'] != '') {
+    $constraints['notes'] = explode(";",$_GET['notes']);
 }
 
 if (@$_GET['dissolved_oxygen'] && @$_GET['dissolved_oxygen'] != '') {

@@ -28,10 +28,14 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		"has dataset", "IHO area", "in project", "longhurst zone", "owner"
 	);
 	
-	public function concatenate_label($label) {
+	public function label_to_variable($label) {
 		return implode('_', explode(' ', $label));
 	}
 
+	public function variable_to_label($variable) {
+		return implode(' ', explode('_', $variable));
+	}
+	
 	/**
 	* Return SPARQL endpoint URL
 	* @return string SPARQL endpoint URL
@@ -152,23 +156,15 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		
 		$body = "";
 		switch($type) {
-			case "years":
-				$body .= "?dataset a vivo:Dataset . ";
-				$body .= "?dataset dco:yearOfPublication ?id . ";
-				$body .= "BIND(str(?id) AS ?label) . ";
-				break;
-				
 			case "count":
 				$body .= "?dataset a vivo:Dataset . ";
 				break;
-				
 			case "datasets":
 				$body .= '?dataset a [rdfs:label "Dataset"@en] . ';
 				$body .= '?dataset rdfs:label ?l . ';
 				$body .= 'BIND(str(?l) AS ?label) . ';
 				break;
 		}
-				
 		return $body;
 	}
 	
@@ -182,24 +178,42 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		
 		$body = "";
 		switch($constraint_type) {
-			case "communities":
-				$body .= "{ ?dataset dco:associatedDCOCommunity <$constraint_value> }";
+			case "dissolved_oxygen":
+			case "absolute_depth_beta":
+			case "specific_conductance":
+			case "depth_start":
+			case "depth_end":
+			case "fecal_coliform":
+			case "temperature":
+			case "conductivity":
+			case "dissolved_oxygen_2":
+			case "volume_filtered":
+			case "precipitation":
+			case "salinity":
+			case "id":
+				$bounds = explode("~", $constraint_value);
+				$lower_bound = trim($bounds[0]);
+				$upper_bound = trim($bounds[1]);
+				$body .= "{ ?$constraint_type rdfs:label \"" . $this->variable_to_label($constraint_type) . "\"@en . ?dataset ?$constraint_type ?value_$constraint_type . } ";
+				if(!empty($lower_bound))
+					$body .= "FILTER (?value_$constraint_type >= $lower_bound) . ";
+				if(!empty($upper_bound))
+					$body .= "FILTER (?value_$constraint_type <= $upper_bound) . ";
 				break;
-			case "groups":
-				$body .= "{ ?dataset dco:associatedDCOPortalGroup <$constraint_value> }";
+			case "notes":
+			case "habitat":
+			case "redox_state":
+			case "sample type":
+			case "environmental_zone":
+			case "longhurst_long_name":
+				$body .= "{ ?$constraint_type rdfs:label \"" . $this->variable_to_label($constraint_type) . "\"@en . ?dataset ?$constraint_type ?value_$constraint_type . ";
+				$body .= "FILTER (contains(lcase(?value_$constraint_type), \"" . strtolower($constraint_value) . "\")) . } ";
 				break;
-			case "authors":
-				$body .= "{ ?dataset vivo:relatedBy [vivo:relates <$constraint_value>] }";
-				break;
-			case "other_authors":
-				$body .= "{ ?dataset dco:authorName \"" . urldecode($constraint_value) . "\" }";
-				break;
-			case "projects":
-				$body .= "{ <$constraint_value> dco:relatedDataset ?dataset }";
-				break;
-			case "years":
-				$body .= "{ ?dataset dco:yearOfPublication \"$constraint_value\"^^xsd:gYear }";
-				break;
+			case "longhurst_zone":
+			case "in_project":
+			case "IHO_area":
+				$body .= "{ ?$constraint_type rdfs:label \"" . $this->variable_to_label($constraint_type) . "\"@en . ?dataset ?$constraint_type [rdfs:label ?value_$constraint_type] .";	
+				$body .= "FILTER (contains(lcase(?value_$constraint_type), \"" . strtolower($constraint_value) . "\")) . } ";
 			default:
 				break;
 		}
@@ -220,7 +234,7 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
                         		$values = $this->getDatasetObjectPropertyValue($result['dataset'], $field);
                                 if(count($values) > 0) {
 					foreach($values as $value) {
-						if(isset($value['value']))  $results[$ind][$this->concatenate_label($field)] = $value['value'];
+						if(isset($value['value']))  $results[$ind][$this->label_to_variable($field)] = $value['value'];
 					}
 				}
                        	}
@@ -240,14 +254,14 @@ class VAMPS_Dataset_S2SConfig extends S2SConfig {
 		
 		// Output for request type "datasets"	
 		if($type == "datasets") {
-			$count = $this->getSearchResultCount($constraints);
+			//$count = $this->getSearchResultCount($constraints);
 			$this->addFieldsToResults($results, $this->datatype_property_labels, "datatype");	
 			$this->addFieldsToResults($results, $this->object_property_labels, "object");	
 			return $this->getFacetOutput($results);
 		}
 		// Output for other types of requests (i.e. search facets)
 		else {		
-			$this->addContextLinks($results, $type);
+			//$this->addContextLinks($results, $type);
 			return $this->getFacetOutput($results);
 		}
 	}
